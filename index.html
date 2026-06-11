@@ -180,9 +180,10 @@
           <span class="chapter-time" id="q-chapter-time">· 约 5 分钟</span>
         </div>
 
-        <!-- 题目文本 -->
-        <div class="question-text-container">
+        <!-- 题目文本（长按切换文字输入） -->
+        <div class="question-text-container" id="question-text-container">
           <h2 class="question-text" id="q-text"></h2>
+          <p class="question-text-hint" id="question-text-hint">长按题目可改用文字输入</p>
         </div>
 
         <!-- 子问题步骤（Q8 专用） -->
@@ -191,45 +192,52 @@
         <!-- 快捷标签（Q2 专用） -->
         <div class="quick-tags" id="q-tags"></div>
 
-        <!-- VoiceOrb -->
-        <div class="voice-orb-container">
-          <button class="voice-orb" id="voice-orb" aria-label="按住说话"
-            ontouchstart="app.onOrbPress(event)"
-            ontouchend="app.onOrbRelease(event)"
-            onmousedown="app.onOrbPress(event)"
-            onmouseup="app.onOrbRelease(event)"
-            onmouseleave="app.onOrbRelease(event)">
-            <div class="orb-inner">
-              <div class="orb-glow"></div>
-              <div class="orb-core"></div>
-              <div class="orb-waves" id="orb-waves"></div>
-              <svg class="orb-mic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" y1="19" x2="12" y2="23"/>
-                <line x1="8" y1="23" x2="16" y2="23"/>
-              </svg>
-              <svg class="orb-check" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="20 6 9 17 4 12"/>
-              </svg>
+        <!-- 回答区 -->
+        <div class="answer-area" id="answer-area">
+          <!-- 转写气泡（置于输入控件上方，更易看见） -->
+          <div class="transcript-bubble" id="transcript-bubble" style="display:none;">
+            <div class="answer-label">你的回答</div>
+            <div class="transcript-text" id="transcript-text"></div>
+            <div class="transcript-actions" id="transcript-actions">
+              <button class="btn-text" onclick="app.rerecord()">重录</button>
+              <button class="btn-text btn-text-primary" onclick="app.confirmTranscript()">确认</button>
             </div>
-          </button>
-          <p class="orb-hint" id="orb-hint">按住说话</p>
-        </div>
-
-        <!-- 文字输入模式（降级） -->
-        <div class="text-input-mode" id="text-input-mode" style="display:none;">
-          <textarea class="text-input" id="text-input" placeholder="在这里输入你想说的，效果和说话一样。" rows="4"></textarea>
-          <button class="btn btn-primary" onclick="app.submitText()">确认</button>
-        </div>
-
-        <!-- 转写气泡 -->
-        <div class="transcript-bubble" id="transcript-bubble" style="display:none;">
-          <div class="transcript-text" id="transcript-text"></div>
-          <div class="transcript-actions">
-            <button class="btn-text" onclick="app.rerecord()">重录</button>
-            <button class="btn-text btn-text-primary" onclick="app.confirmTranscript()">确认</button>
           </div>
+
+          <!-- VoiceOrb -->
+          <div class="voice-orb-container" id="voice-orb-container">
+            <button class="voice-orb" id="voice-orb" aria-label="按住说话"
+              ontouchstart="app.onOrbPress(event)"
+              ontouchend="app.onOrbRelease(event)"
+              onmousedown="app.onOrbPress(event)"
+              onmouseup="app.onOrbRelease(event)"
+              onmouseleave="app.onOrbRelease(event)">
+              <div class="orb-inner">
+                <div class="orb-glow"></div>
+                <div class="orb-core"></div>
+                <div class="orb-waves" id="orb-waves"></div>
+                <svg class="orb-mic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+                <svg class="orb-check" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </div>
+            </button>
+            <p class="orb-hint" id="orb-hint">按住说话</p>
+          </div>
+
+          <!-- 文字输入模式 -->
+          <div class="text-input-mode" id="text-input-mode" style="display:none;">
+            <div class="answer-label">你的回答</div>
+            <textarea class="text-input" id="text-input" placeholder="在这里输入你想说的，效果和说话一样。" rows="5"></textarea>
+            <button class="btn btn-primary" onclick="app.submitText()">确认输入</button>
+          </div>
+
+          <button class="input-mode-toggle" id="input-mode-toggle" type="button" onclick="app.toggleInputMode()">改用文字输入</button>
         </div>
 
         <!-- 底部操作区 -->
@@ -254,7 +262,20 @@
         </div>
         <div class="rf-content">
           <p class="rf-question" id="rf-question"></p>
-          <div class="rf-actions">
+          <div class="rf-transcript" id="rf-transcript" style="display:none;">
+            <div class="answer-label">你的补充</div>
+            <div class="rf-transcript-text" id="rf-transcript-text"></div>
+            <div class="rf-transcript-actions" id="rf-transcript-actions" style="display:none;">
+              <button class="btn-text" onclick="app.rerecordFollowUp()">重录</button>
+              <button class="btn-text btn-text-primary" onclick="app.confirmFollowUpTranscript()">确认</button>
+            </div>
+          </div>
+          <div class="rf-text-input-mode" id="rf-text-input-mode" style="display:none;">
+            <div class="answer-label">你的补充</div>
+            <textarea class="text-input rf-text-input" id="rf-text-input" placeholder="在这里补充你的回答……" rows="3"></textarea>
+            <button class="btn btn-primary btn-small" onclick="app.submitFollowUpText()">确认输入</button>
+          </div>
+          <div class="rf-actions" id="rf-voice-actions">
             <button class="voice-orb voice-orb-small" id="voice-orb-followup" aria-label="按住补充"
               ontouchstart="app.onOrbPressFollowup(event)"
               ontouchend="app.onOrbReleaseFollowup(event)"
@@ -272,8 +293,9 @@
                 </svg>
               </div>
             </button>
-            <span class="rf-hint">按住补充</span>
+            <span class="rf-hint" id="rf-hint">按住补充</span>
           </div>
+          <button class="input-mode-toggle rf-mode-toggle" id="rf-mode-toggle" type="button" onclick="app.toggleFollowUpInputMode()">改用文字输入</button>
           <button class="skip-pill rf-skip" onclick="app.skipFollowup()">跳过追问 →</button>
         </div>
       </div>
