@@ -449,6 +449,11 @@ const app = {
   pendingNextQ: null,
   followUpIndex: 0,
   showingFollowUp: false,
+  followUpIsSubStep: false,
+  subStepFollowUpShown: false,
+  useTextMode: false,
+  followUpUseTextMode: false,
+  questionLongPressTimer: null,
   _analyzing: false,
   _analyzeStepTimer: null,
 
@@ -479,6 +484,40 @@ const app = {
       reportInput.addEventListener('input', () => {
         document.getElementById('report-count').textContent = `${reportInput.value.length} 字`;
       });
+    }
+
+    this.bindQuestionLongPress();
+  },
+
+  bindQuestionLongPress() {
+    const qText = document.getElementById('q-text');
+    const container = document.getElementById('question-text-container');
+    if (!qText || !container) return;
+
+    const startPress = (e) => {
+      if (e.type === 'mousedown' && e.button !== 0) return;
+      this.clearQuestionLongPress();
+      this.questionLongPressTimer = setTimeout(() => {
+        this.questionLongPressTimer = null;
+        this.switchToTextMode();
+        this.showToast('已切换为文字输入');
+      }, 600);
+    };
+
+    const endPress = () => this.clearQuestionLongPress();
+
+    qText.addEventListener('touchstart', startPress, { passive: true });
+    qText.addEventListener('touchend', endPress);
+    qText.addEventListener('touchcancel', endPress);
+    qText.addEventListener('mousedown', startPress);
+    qText.addEventListener('mouseup', endPress);
+    qText.addEventListener('mouseleave', endPress);
+  },
+
+  clearQuestionLongPress() {
+    if (this.questionLongPressTimer) {
+      clearTimeout(this.questionLongPressTimer);
+      this.questionLongPressTimer = null;
     }
   },
 
@@ -542,6 +581,8 @@ const app = {
     state.followUpAnswers = {};
     state.saveToStorage();
     this.followUpIndex = 0;
+    this.subStepFollowUpShown = false;
+    this.useTextMode = false;
     this.showingFollowUp = false;
     router.go('opening');
 
@@ -606,21 +647,119 @@ const app = {
       tagsEl.classList.remove('active');
     }
 
+    // Q8 子问题进度
+    this.renderSubSteps(q);
+
     // 重置 UI 状态
     this.resetQuestionUI();
 
-    // 检查是否已有答案
-    const existingAnswer = state.getAnswer(q.id);
-    if (existingAnswer && (!q.subSteps || state.currentSubStep === 0)) {
-      this.showTranscript(existingAnswer);
+    // 恢复已保存答案
+    const savedText = q.subSteps
+      ? state.getFollowUpAnswer(q.id, state.currentSubStep)
+      : state.getAnswer(q.id);
+    if (savedText.trim()) {
+      this.showTranscript(savedText, { confirmed: true });
+      this.showNextButton();
     }
 
-    // 语音支持检测
-    if (!state.speechSupported) {
-      document.getElementById('voice-orb').style.display = 'none';
-      document.getElementById('orb-hint').style.display = 'none';
-      document.getElementById('text-input-mode').style.display = 'block';
+    // 输入模式
+    if (!state.speechSupported || this.useTextMode) {
+      this.switchToTextMode();
+    } else {
+      this.switchToVoiceMode();
     }
+  },
+
+  renderSubSteps(q) {
+    const el = document.getElementById('q-substeps');
+    if (!q.subSteps || !q.subSteps.length) {
+      el.classList.remove('active');
+      el.innerHTML = '';
+      return;
+    }
+    el.classList.add('active');
+    el.innerHTML = q.subSteps.map((step, i) => {
+      const cls = i < state.currentSubStep ? 'done' : i === state.currentSubStep ? 'current' : '';
+      return `<div class="sub-step ${cls}"><span class="sub-step-label">${step.label}</span></div>`;
+    }).join('');
+  },
+
+  getActiveFollowUps(q) {
+    if (!q.followUps) return [];
+    if (!q.branchFollowUps) return q.followUps;
+    const answer = (state.getAnswer(q.id) || '').trim();
+    const noDirection = /没有|不确定|想不到|暂无|说不清|没方向|不太/.test(answer);
+    const multiDirection = /几个|两个|或者|一方面|另一方面|纠结|矛盾|两/.test(answer);
+    if (noDirection && !multiDirection) return [q.followUps[0]];
+    return q.followUps;
+  },
+
+  shouldShowSubStepFollowUp() {
+    const q = QUESTIONS[state.currentQ];
+    if (!q.subSteps) return false;
+    const step = q.subSteps[state.currentSubStep];
+    if (!step.followUp || this.subStepFollowUpShown) return false;
+    const ans = state.getFollowUpAnswer(q.id, state.currentSubStep);
+    if (!ans.trim() || ans.includes('· 追问：')) return false;
+    return true;
+  },
+
+  toggleInputMode() {
+    if (this.useTextMode) this.switchToVoiceMode();
+    else this.switchToTextMode();
+  },
+
+  switchToTextMode() {
+    this.useTextMode = true;
+    document.getElementById('voice-orb-container').style.display = 'none';
+    document.getElementById('text-input-mode').style.display = 'block';
+    const toggle = document.getElementById('input-mode-toggle');
+    if (toggle) {
+      toggle.textContent = state.speechSupported ? '改用语音输入' : '';
+      toggle.style.display = state.speechSupported ? 'block' : 'none';
+    }
+    document.getElementById('question-text-hint').style.display = 'none';
+  },
+
+  switchToVoiceMode() {
+    if (!state.speechSupported) return;
+    this.useTextMode = false;
+    document.getElementById('voice-orb-container').style.display = 'flex';
+    document.getElementById('text-input-mode').style.display = 'none';
+    const toggle = document.getElementById('input-mode-toggle');
+    if (toggle) {
+      toggle.textContent = '改用文字输入';
+      toggle.style.display = 'block';
+    }
+    document.getElementById('question-text-hint').style.display = 'block';
+  },
+
+  toggleFollowUpInputMode() {
+    if (this.followUpUseTextMode) this.switchFollowUpToVoiceMode();
+    else this.switchFollowUpToTextMode();
+  },
+
+  switchFollowUpToTextMode() {
+    this.followUpUseTextMode = true;
+    document.getElementById('rf-voice-actions').style.display = 'none';
+    document.getElementById('rf-text-input-mode').style.display = 'block';
+    const toggle = document.getElementById('rf-mode-toggle');
+    if (toggle) toggle.textContent = '改用语音补充';
+  },
+
+  switchFollowUpToVoiceMode() {
+    this.followUpUseTextMode = false;
+    document.getElementById('rf-voice-actions').style.display = 'flex';
+    document.getElementById('rf-text-input-mode').style.display = 'none';
+    const toggle = document.getElementById('rf-mode-toggle');
+    if (toggle) toggle.textContent = '改用文字输入';
+  },
+
+  scrollToAnswer(el) {
+    if (!el) return;
+    requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
   },
 
   formatQuestionText(lines) {
@@ -628,26 +767,23 @@ const app = {
   },
 
   resetQuestionUI() {
-    // 重置 VoiceOrb
     const orb = document.getElementById('voice-orb');
     orb.classList.remove('recording', 'done');
 
-    // 隐藏转写气泡
-    document.getElementById('transcript-bubble').style.display = 'none';
+    const bubble = document.getElementById('transcript-bubble');
+    bubble.style.display = 'none';
+    bubble.classList.remove('confirmed', 'live');
     document.getElementById('transcript-text').textContent = '';
+    document.getElementById('transcript-actions').style.display = 'flex';
 
-    // 隐藏追问
     document.getElementById('ripple-followup').classList.remove('active');
     this.showingFollowUp = false;
+    this.followUpIsSubStep = false;
 
-    // 隐藏下一题按钮
     document.getElementById('btn-next').classList.remove('active');
-
-    // 重置文字输入
     document.getElementById('text-input').value = '';
-
-    // 重置 orb hint
     document.getElementById('orb-hint').textContent = '按住说话';
+    document.querySelector('.question-content')?.classList.remove('recording-active');
   },
 
   // ===== VoiceOrb 交互 =====
@@ -661,21 +797,17 @@ const app = {
     const orb = document.getElementById('voice-orb');
     orb.classList.add('recording');
     document.getElementById('orb-hint').textContent = '正在聆听…';
-    document.getElementById('transcript-bubble').style.display = 'none';
+    document.querySelector('.question-content')?.classList.add('recording-active');
 
     voice.onResult = (final, interim) => {
       state.currentTranscript += final;
-      // 实时显示转写
       if (state.currentTranscript || interim) {
         this.showLiveTranscript(state.currentTranscript + interim);
       }
     };
 
     voice.onEnd = () => {
-      if (state.isRecording) {
-        // 自动重新启动（连续模式）
-        setTimeout(() => voice.start(), 100);
-      }
+      if (state.isRecording) setTimeout(() => voice.start(), 100);
     };
 
     voice.onError = () => {
@@ -695,35 +827,47 @@ const app = {
 
     const orb = document.getElementById('voice-orb');
     orb.classList.remove('recording');
+    document.querySelector('.question-content')?.classList.remove('recording-active');
 
     if (state.currentTranscript.trim()) {
       orb.classList.add('done');
-      document.getElementById('orb-hint').textContent = '已录制';
-      this.showTranscript(state.currentTranscript);
+      document.getElementById('orb-hint').textContent = '已录制，请确认';
+      this.showTranscript(state.currentTranscript, { pending: true });
     } else {
       document.getElementById('orb-hint').textContent = '按住说话';
+      document.getElementById('transcript-bubble').style.display = 'none';
     }
   },
 
-  // 追问 VoiceOrb
   onOrbPressFollowup(e) {
     e.preventDefault();
     if (state.isFollowUpRecording) return;
+    if (!state.speechSupported) {
+      this.switchFollowUpToTextMode();
+      return;
+    }
 
     state.isFollowUpRecording = true;
     state.currentFollowUpTranscript = '';
 
-    const orb = document.getElementById('voice-orb-followup');
-    orb.classList.add('recording');
+    document.getElementById('voice-orb-followup').classList.add('recording');
+    document.getElementById('rf-hint').textContent = '正在聆听…';
+    document.getElementById('rf-transcript-actions').style.display = 'none';
 
     voice.onResult = (final, interim) => {
       state.currentFollowUpTranscript += final;
+      if (state.currentFollowUpTranscript || interim) {
+        this.showFollowUpLiveTranscript(state.currentFollowUpTranscript + interim, true);
+      }
     };
 
     voice.onEnd = () => {
-      if (state.isFollowUpRecording) {
-        setTimeout(() => voice.start(), 100);
-      }
+      if (state.isFollowUpRecording) setTimeout(() => voice.start(), 100);
+    };
+
+    voice.onError = () => {
+      this.showToast('没听到声音，要再来一次吗？');
+      this.onOrbReleaseFollowup();
     };
 
     voice.start();
@@ -737,99 +881,203 @@ const app = {
     voice.stop();
 
     document.getElementById('voice-orb-followup').classList.remove('recording');
+    const hint = document.getElementById('rf-hint');
 
     if (state.currentFollowUpTranscript.trim()) {
-      const q = QUESTIONS[state.currentQ];
-      state.setFollowUpAnswer(q.id, this.followUpIndex, state.currentFollowUpTranscript);
-      this.hideFollowUp();
-      this.showNextButton();
-      this.showToast('追问已记录');
+      this.showFollowUpLiveTranscript(state.currentFollowUpTranscript, false);
+      hint.textContent = '已录制，请确认';
+    } else {
+      hint.textContent = '按住补充';
+      document.getElementById('rf-transcript').style.display = 'none';
     }
   },
 
-  // 显示实时转写
+  showFollowUpLiveTranscript(text, isLive) {
+    const box = document.getElementById('rf-transcript');
+    box.style.display = 'block';
+    box.classList.toggle('live', isLive);
+    document.getElementById('rf-transcript-text').textContent = text;
+    document.getElementById('rf-transcript-actions').style.display = isLive ? 'none' : 'flex';
+    if (!isLive) this.scrollToAnswer(box);
+  },
+
   showLiveTranscript(text) {
     const bubble = document.getElementById('transcript-bubble');
-    const textEl = document.getElementById('transcript-text');
     bubble.style.display = 'block';
-    textEl.textContent = text;
+    bubble.classList.add('live');
+    bubble.classList.remove('confirmed');
+    document.getElementById('transcript-text').textContent = text;
+    this.scrollToAnswer(bubble);
   },
 
-  // 显示转写气泡
-  showTranscript(text) {
+  showTranscript(text, options = {}) {
     const bubble = document.getElementById('transcript-bubble');
     const textEl = document.getElementById('transcript-text');
+    const actions = document.getElementById('transcript-actions');
     bubble.style.display = 'block';
+    bubble.classList.remove('live');
     textEl.textContent = text;
-    document.getElementById('btn-next').classList.add('active');
+
+    if (options.pending) {
+      bubble.classList.remove('confirmed');
+      actions.style.display = 'flex';
+      document.getElementById('btn-next').classList.remove('active');
+    } else if (options.confirmed) {
+      bubble.classList.add('confirmed');
+      actions.style.display = 'none';
+    } else {
+      bubble.classList.remove('confirmed');
+      actions.style.display = 'flex';
+      document.getElementById('btn-next').classList.remove('active');
+    }
+    this.scrollToAnswer(bubble);
   },
 
-  // 重录
   rerecord() {
-    this.resetQuestionUI();
     state.currentTranscript = '';
+    const orb = document.getElementById('voice-orb');
+    orb.classList.remove('done');
+    document.getElementById('transcript-bubble').style.display = 'none';
+    document.getElementById('transcript-text').textContent = '';
+    document.getElementById('orb-hint').textContent = '按住说话';
+    document.getElementById('btn-next').classList.remove('active');
+    if (this.useTextMode) {
+      document.getElementById('text-input-mode').style.display = 'block';
+      document.getElementById('input-mode-toggle').style.display = state.speechSupported ? 'block' : 'none';
+      document.getElementById('text-input').value = '';
+      document.getElementById('text-input').focus();
+    } else if (state.speechSupported) {
+      document.getElementById('voice-orb-container').style.display = 'flex';
+      document.getElementById('input-mode-toggle').style.display = 'block';
+    }
   },
 
-  // 确认转写
+  formatAnswerHtml(text, editable, qid) {
+    const parts = text.split('\n  · 追问：');
+    const main = parts[0].trim();
+    let html = '';
+    if (editable) {
+      html += `<div class="summary-a" contenteditable="true" data-qid="${qid}">${this.escapeHtml(main)}</div>`;
+    } else {
+      html += `<div class="summary-a">${this.escapeHtml(main)}</div>`;
+    }
+    if (parts[1] && parts[1].trim()) {
+      html += `<div class="summary-followup"><span class="summary-followup-label">补充</span><div class="summary-followup-text">${this.escapeHtml(parts[1].trim())}</div></div>`;
+    }
+    return html;
+  },
+
   confirmTranscript() {
     const q = QUESTIONS[state.currentQ];
-    const text = document.getElementById('transcript-text').textContent;
+    const text = document.getElementById('transcript-text').textContent.trim();
+    if (!text) {
+      this.showToast('请输入内容');
+      return;
+    }
 
     if (q.subSteps) {
-      // 子问题模式：保存到对应子步骤
       state.setFollowUpAnswer(q.id, state.currentSubStep, text);
     } else {
       state.setAnswer(q.id, text);
     }
 
     state.saveToStorage();
+    this.showTranscript(text, { confirmed: true });
     this.checkFollowUp();
   },
 
-  // 文字输入提交
   submitText() {
     const text = document.getElementById('text-input').value.trim();
     if (!text) {
       this.showToast('请输入内容');
       return;
     }
-
-    const q = QUESTIONS[state.currentQ];
-    if (q.subSteps) {
-      state.setFollowUpAnswer(q.id, state.currentSubStep, text);
-    } else {
-      state.setAnswer(q.id, text);
-    }
-    state.saveToStorage();
-    this.checkFollowUp();
+    state.currentTranscript = text;
+    document.getElementById('text-input-mode').style.display = 'none';
+    document.getElementById('voice-orb-container').style.display = 'none';
+    document.getElementById('input-mode-toggle').style.display = 'none';
+    this.showTranscript(text, { pending: true });
   },
 
-  // 插入快捷标签
   insertTag(tag) {
-    const textMode = document.getElementById('text-input-mode').style.display !== 'none';
+    const textMode = this.useTextMode;
     if (textMode) {
       const input = document.getElementById('text-input');
       input.value = (input.value ? input.value + '，' : '') + tag;
       input.focus();
       return;
     }
-    const bubble = document.getElementById('transcript-text');
-    const existing = bubble.textContent.trim();
+    const existing = state.currentTranscript.trim()
+      || document.getElementById('transcript-text').textContent.trim();
     const next = (existing ? existing + '，' : '') + tag;
-    bubble.textContent = next;
     state.currentTranscript = next;
-    document.getElementById('transcript-bubble').style.display = 'block';
-    document.getElementById('btn-next').classList.add('active');
+    this.showTranscript(next, { pending: true });
+    document.getElementById('voice-orb').classList.add('done');
+    document.getElementById('orb-hint').textContent = '已录入，请确认';
   },
 
-  // 检查追问
+  rerecordFollowUp() {
+    state.currentFollowUpTranscript = '';
+    document.getElementById('rf-transcript').style.display = 'none';
+    document.getElementById('rf-transcript-text').textContent = '';
+    document.getElementById('rf-transcript-actions').style.display = 'none';
+    document.getElementById('rf-hint').textContent = '按住补充';
+    document.getElementById('rf-text-input').value = '';
+    if (this.followUpUseTextMode) document.getElementById('rf-text-input').focus();
+  },
+
+  confirmFollowUpTranscript() {
+    const q = QUESTIONS[state.currentQ];
+    const text = (state.currentFollowUpTranscript
+      || document.getElementById('rf-transcript-text').textContent).trim();
+    if (!text) {
+      this.showToast('请输入内容');
+      return;
+    }
+
+    if (this.followUpIsSubStep) {
+      const main = state.getFollowUpAnswer(q.id, state.currentSubStep);
+      state.setFollowUpAnswer(q.id, state.currentSubStep, `${main}\n  · 追问：${text}`);
+      this.hideFollowUp(false);
+      this.followUpIsSubStep = false;
+      state.saveToStorage();
+      this.checkFollowUp();
+      return;
+    }
+
+    state.setFollowUpAnswer(q.id, this.followUpIndex, text);
+    state.saveToStorage();
+    this.hideFollowUp();
+    this.checkFollowUp();
+  },
+
+  submitFollowUpText() {
+    const text = document.getElementById('rf-text-input').value.trim();
+    if (!text) {
+      this.showToast('请输入内容');
+      return;
+    }
+    state.currentFollowUpTranscript = text;
+    document.getElementById('rf-text-input-mode').style.display = 'none';
+    document.getElementById('rf-voice-actions').style.display = 'none';
+    document.getElementById('rf-mode-toggle').style.display = 'none';
+    this.showFollowUpLiveTranscript(text, false);
+    document.getElementById('rf-hint').textContent = '已录入，请确认';
+  },
+
   checkFollowUp() {
     const q = QUESTIONS[state.currentQ];
 
-    // Q8 子问题处理
+    if (this.shouldShowSubStepFollowUp()) {
+      const step = q.subSteps[state.currentSubStep];
+      this.showFollowUp(step.followUp, { subStep: true });
+      return;
+    }
+
     if (q.subSteps) {
       if (state.currentSubStep < q.subSteps.length - 1) {
         state.currentSubStep++;
+        this.subStepFollowUpShown = false;
         state.saveToStorage();
         this.initQuestion();
         return;
@@ -837,47 +1085,74 @@ const app = {
       state.finalizeSubStepAnswer(q);
     }
 
-    // 普通追问
-    if (q.followUps && this.followUpIndex < q.followUps.length && !this.showingFollowUp) {
-      this.showFollowUp(q.followUps[this.followUpIndex]);
+    const followUps = this.getActiveFollowUps(q);
+    if (followUps.length && this.followUpIndex < followUps.length && !this.showingFollowUp) {
+      this.showFollowUp(followUps[this.followUpIndex]);
       return;
     }
 
-    // 共情回应（Q4, Q10）
     if (q.empathyResponse) {
       this.showEmpathyToast(q.empathyResponse);
-      setTimeout(() => {
-        this.showNextButton();
-      }, 2000);
+      setTimeout(() => this.showNextButton(), 2000);
       return;
     }
 
     this.showNextButton();
   },
 
-  // 显示追问浮层
-  showFollowUp(question) {
+  showFollowUp(question, options = {}) {
     this.showingFollowUp = true;
+    this.followUpIsSubStep = !!options.subStep;
+    if (options.subStep) this.subStepFollowUpShown = true;
+
     document.getElementById('rf-question').textContent = question;
+    document.getElementById('rf-transcript').style.display = 'none';
+    document.getElementById('rf-transcript').classList.remove('live');
+    document.getElementById('rf-transcript-text').textContent = '';
+    document.getElementById('rf-transcript-actions').style.display = 'none';
+    document.getElementById('rf-text-input').value = '';
+    document.getElementById('rf-hint').textContent = '按住补充';
+    document.getElementById('voice-orb-followup').classList.remove('recording');
     document.getElementById('ripple-followup').classList.add('active');
-  },
+    document.getElementById('btn-next').classList.remove('active');
 
-  // 隐藏追问
-  hideFollowUp() {
-    document.getElementById('ripple-followup').classList.remove('active');
-    this.showingFollowUp = false;
-    this.followUpIndex++;
-  },
-
-  // 跳过追问
-  skipFollowup() {
-    this.hideFollowUp();
-    const q = QUESTIONS[state.currentQ];
-    if (q.followUps && this.followUpIndex < q.followUps.length - 1) {
-      this.followUpIndex++;
-      this.showFollowUp(q.followUps[this.followUpIndex]);
+    this.followUpUseTextMode = false;
+    if (!state.speechSupported) {
+      this.switchFollowUpToTextMode();
+      document.getElementById('rf-mode-toggle').style.display = 'none';
     } else {
-      this.showNextButton();
+      this.switchFollowUpToVoiceMode();
+      document.getElementById('rf-mode-toggle').style.display = 'block';
+    }
+  },
+
+  hideFollowUp(incrementIndex = true) {
+    document.getElementById('ripple-followup').classList.remove('active');
+    document.getElementById('rf-transcript').style.display = 'none';
+    document.getElementById('rf-transcript-text').textContent = '';
+    document.getElementById('rf-transcript-actions').style.display = 'none';
+    document.getElementById('rf-hint').textContent = '按住补充';
+    document.getElementById('rf-mode-toggle').style.display = 'block';
+    this.showingFollowUp = false;
+    this.followUpIsSubStep = false;
+    state.currentFollowUpTranscript = '';
+    if (incrementIndex) this.followUpIndex++;
+  },
+
+  skipFollowup() {
+    const wasSubStep = this.followUpIsSubStep;
+    this.hideFollowUp(!wasSubStep);
+    if (wasSubStep) {
+      this.subStepFollowUpShown = true;
+      this.checkFollowUp();
+      return;
+    }
+    const q = QUESTIONS[state.currentQ];
+    const followUps = this.getActiveFollowUps(q);
+    if (followUps.length && this.followUpIndex < followUps.length) {
+      this.showFollowUp(followUps[this.followUpIndex]);
+    } else {
+      this.checkFollowUp();
     }
   },
 
@@ -911,6 +1186,7 @@ const app = {
     if (q.subSteps && state.currentSubStep < q.subSteps.length - 1) {
       state.currentSubStep++;
       this.followUpIndex = 0;
+      this.subStepFollowUpShown = false;
       this.initQuestion();
       return;
     }
@@ -939,6 +1215,7 @@ const app = {
     state.currentSubStep = 0;
     state.saveToStorage();
     this.followUpIndex = 0;
+    this.subStepFollowUpShown = false;
     this.initQuestion();
   },
 
@@ -949,6 +1226,7 @@ const app = {
     if (q.subSteps) {
       if (state.currentSubStep < q.subSteps.length - 1) {
         state.currentSubStep++;
+        this.subStepFollowUpShown = false;
         this.initQuestion();
         return;
       }
@@ -965,6 +1243,7 @@ const app = {
     state.currentSubStep = 0;
     state.saveToStorage();
     this.followUpIndex = 0;
+    this.subStepFollowUpShown = false;
     this.initQuestion();
   },
 
@@ -995,6 +1274,7 @@ const app = {
     state.currentSubStep = 0;
     state.saveToStorage();
     this.followUpIndex = 0;
+    this.subStepFollowUpShown = false;
     this.pendingNextQ = null;
     router.go('question');
   },
@@ -1026,18 +1306,19 @@ const app = {
 
       const answer = (state.answers[q.id] || '').trim();
       if (answer) {
-        if (state.editingSummary) {
-          html += `<div class="summary-a" contenteditable="true" data-qid="${q.id}">${this.escapeHtml(answer)}</div>`;
-        } else {
-          html += `<div class="summary-a">${this.escapeHtml(answer)}</div>`;
-        }
+        html += this.formatAnswerHtml(answer, state.editingSummary, q.id);
       }
 
       if (q.subSteps) {
         q.subSteps.forEach((step, sIdx) => {
           const subAnswer = (state.followUpAnswers[q.id] || [])[sIdx];
           if (subAnswer && subAnswer.trim()) {
-            html += `<div class="summary-sub">${step.label}：${this.escapeHtml(subAnswer.trim())}</div>`;
+            const parts = subAnswer.split('\n  · 追问：');
+            html += `<div class="summary-sub"><span class="summary-sub-label">${step.label}</span>${this.escapeHtml(parts[0].trim())}`;
+            if (parts[1] && parts[1].trim()) {
+              html += `<div class="summary-followup"><span class="summary-followup-label">补充</span><div class="summary-followup-text">${this.escapeHtml(parts[1].trim())}</div></div>`;
+            }
+            html += '</div>';
           }
         });
       }
@@ -1046,7 +1327,7 @@ const app = {
       if (fuAnswers && !q.subSteps && q.followUps) {
         fuAnswers.forEach((fu, fuIdx) => {
           if (fu && fu.trim()) {
-            html += `<div class="summary-sub">追问：${this.escapeHtml(fu.trim())}</div>`;
+            html += `<div class="summary-followup"><span class="summary-followup-label">追问 ${fuIdx + 1}</span><div class="summary-followup-text">${this.escapeHtml(fu.trim())}</div></div>`;
           }
         });
       }
