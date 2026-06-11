@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#08050F">
+  <title>BEARING — 个人战略咨询师</title>
+  <meta name="description" content="聊清楚你是谁，想明白往哪走，拿到一份战略报告。">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 全局背景氛围 -->
+  <div class="ambient-bg">
+    <div class="ambient-mesh"></div>
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+  </div>
+
+  <!-- 噪声纹理覆盖 -->
+  <div class="noise-overlay"></div>
+
+  <!-- 全局：返回首页 -->
+  <button class="btn-home-global" id="btn-home" onclick="app.goHome()" aria-label="返回首页" type="button">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1V9.5z"/>
+    </svg>
+    <span>首页</span>
+  </button>
+
+  <!-- 应用主容器 -->
+  <div id="app">
+
+    <!-- ==================== 页面：封面 ==================== -->
+    <section class="page active" id="page-cover">
+      <button class="cover-hit" type="button" onclick="router.go('landing')" aria-label="点击进入">
+        <div class="cover-content">
+          <header class="cover-header">
+            <h1 class="brand-mark cover-brand">BEARING</h1>
+            <p class="brand-sub cover-sub">个人战略咨询师</p>
+          </header>
+
+          <div class="landing-divider cover-divider"></div>
+
+          <div class="landing-tagline cover-tagline">
+            <p class="tagline-line" data-delay="0">聊清楚你是谁</p>
+            <p class="tagline-line" data-delay="1">想明白往哪走</p>
+            <p class="tagline-line" data-delay="2">拿到一份战略报告</p>
+          </div>
+        </div>
+
+        <p class="cover-enter-hint">
+          <span class="cover-enter-dot"></span>
+          点击进入
+        </p>
+      </button>
+    </section>
+
+    <!-- ==================== 页面：模式选择 ==================== -->
+    <section class="page" id="page-landing">
+      <div class="landing-content landing-modes">
+        <header class="modes-header">
+          <p class="modes-eyebrow">BEARING</p>
+          <h2 class="modes-title">选择你的方式</h2>
+        </header>
+
+        <!-- 模式一：战略深潜 -->
+        <div class="mode-card mode-primary" data-mode="dive">
+          <div class="mode-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="5"/>
+              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+            </svg>
+          </div>
+          <div class="mode-info">
+            <h2 class="mode-title">战略深潜</h2>
+            <p class="mode-desc">13 个问题 · 约 30 分钟</p>
+            <p class="mode-desc">全程语音 · 无需跳转</p>
+          </div>
+          <button class="btn btn-primary btn-large" onclick="router.go('guide')">开始</button>
+        </div>
+
+        <!-- 模式二：豆包语音电话 -->
+        <div class="mode-card mode-secondary" data-mode="doubao">
+          <div class="mode-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+          <div class="mode-info">
+            <h2 class="mode-title">语音深度交流</h2>
+            <p class="mode-desc">跳转豆包 · 自由对话</p>
+            <p class="mode-desc">约 20–30 分钟</p>
+          </div>
+          <button class="btn btn-outline btn-large" onclick="router.go('doubao-guide')">了解</button>
+        </div>
+
+        <!-- 已有对话 / 历史入口 -->
+        <div class="landing-extras">
+          <button class="text-link" onclick="router.go('submit')">已有对话？直接提交 →</button>
+          <button class="text-link" onclick="router.go('history')">查看历史报告 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：访谈须知 ==================== -->
+    <section class="page" id="page-guide">
+      <div class="guide-content">
+        <button class="btn-back" onclick="app.goHome()" aria-label="返回首页">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+
+        <div class="guide-header">
+          <h2 class="guide-title">接下来半小时</h2>
+        </div>
+
+        <div class="guide-sop">
+          <p class="sop-line">你想到什么说什么</p>
+          <p class="sop-line">不用准备</p>
+          <p class="sop-line">不想答的说「过」</p>
+          <p class="sop-gap"></p>
+          <p class="sop-line">你放松就好</p>
+          <p class="sop-line">我负责听</p>
+        </div>
+
+        <div class="breath-ring-container">
+          <div class="breath-ring"></div>
+        </div>
+
+        <button class="btn btn-primary btn-large btn-ready" onclick="app.startInterview()">我准备好了</button>
+
+        <p class="guide-note">预计 30 分钟 · 可暂停</p>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：开场仪式 ==================== -->
+    <section class="page" id="page-opening">
+      <div class="opening-content">
+        <div class="opening-chapter" id="opening-label">Ch.1 现状锚定</div>
+        <div class="opening-title" id="opening-text">我们先从「现在」开始。</div>
+        <div class="opening-wait" id="opening-wait">
+          <button class="text-link" onclick="app.extendOpening()">稍等</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：题目页（动态内容） ==================== -->
+    <section class="page" id="page-question">
+      <!-- 左侧旅程地图 -->
+      <div class="journey-path">
+        <div class="jp-layer" data-ch="1">
+          <div class="jp-line"></div>
+          <div class="jp-label">Ch.1 现状</div>
+        </div>
+        <div class="jp-layer" data-ch="2">
+          <div class="jp-line"></div>
+          <div class="jp-label">Ch.2 方向</div>
+        </div>
+        <div class="jp-layer" data-ch="3">
+          <div class="jp-line"></div>
+          <div class="jp-label">Ch.3 深层</div>
+        </div>
+        <div class="jp-layer" data-ch="4">
+          <div class="jp-line"></div>
+          <div class="jp-label">Ch.4 希望</div>
+        </div>
+      </div>
+
+      <div class="question-content">
+        <!-- 章节标签 -->
+        <div class="chapter-header">
+          <span class="chapter-label" id="q-chapter-label">Ch.1 现状锚定</span>
+          <span class="chapter-time" id="q-chapter-time">· 约 5 分钟</span>
+        </div>
+
+        <!-- 题目文本 -->
+        <div class="question-text-container">
+          <h2 class="question-text" id="q-text"></h2>
+        </div>
+
+        <!-- 子问题步骤（Q8 专用） -->
+        <div class="sub-steps" id="q-substeps"></div>
+
+        <!-- 快捷标签（Q2 专用） -->
+        <div class="quick-tags" id="q-tags"></div>
+
+        <!-- VoiceOrb -->
+        <div class="voice-orb-container">
+          <button class="voice-orb" id="voice-orb" aria-label="按住说话"
+            ontouchstart="app.onOrbPress(event)"
+            ontouchend="app.onOrbRelease(event)"
+            onmousedown="app.onOrbPress(event)"
+            onmouseup="app.onOrbRelease(event)"
+            onmouseleave="app.onOrbRelease(event)">
+            <div class="orb-inner">
+              <div class="orb-glow"></div>
+              <div class="orb-core"></div>
+              <div class="orb-waves" id="orb-waves"></div>
+              <svg class="orb-mic" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+              <svg class="orb-check" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </button>
+          <p class="orb-hint" id="orb-hint">按住说话</p>
+        </div>
+
+        <!-- 文字输入模式（降级） -->
+        <div class="text-input-mode" id="text-input-mode" style="display:none;">
+          <textarea class="text-input" id="text-input" placeholder="在这里输入你想说的，效果和说话一样。" rows="4"></textarea>
+          <button class="btn btn-primary" onclick="app.submitText()">确认</button>
+        </div>
+
+        <!-- 转写气泡 -->
+        <div class="transcript-bubble" id="transcript-bubble" style="display:none;">
+          <div class="transcript-text" id="transcript-text"></div>
+          <div class="transcript-actions">
+            <button class="btn-text" onclick="app.rerecord()">重录</button>
+            <button class="btn-text btn-text-primary" onclick="app.confirmTranscript()">确认</button>
+          </div>
+        </div>
+
+        <!-- 底部操作区 -->
+        <div class="question-footer">
+          <button class="skip-pill" id="skip-pill" onclick="app.skipQuestion()">这题先跳过</button>
+          <button class="btn btn-primary btn-next" id="btn-next" style="display:none;" onclick="app.nextQuestion()">
+            <span id="btn-next-text">下一题</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- 追问浮层 -->
+      <div class="ripple-followup" id="ripple-followup">
+        <div class="rf-waves">
+          <svg viewBox="0 0 400 24" preserveAspectRatio="none">
+            <path d="M0 12 Q50 6, 100 12 T200 12 T300 12 T400 12" stroke="currentColor" fill="none" stroke-width="1" opacity="0.3"/>
+            <path d="M0 12 Q50 18, 100 12 T200 12 T300 12 T400 12" stroke="currentColor" fill="none" stroke-width="1" opacity="0.2"/>
+          </svg>
+        </div>
+        <div class="rf-content">
+          <p class="rf-question" id="rf-question"></p>
+          <div class="rf-actions">
+            <button class="voice-orb voice-orb-small" id="voice-orb-followup" aria-label="按住补充"
+              ontouchstart="app.onOrbPressFollowup(event)"
+              ontouchend="app.onOrbReleaseFollowup(event)"
+              onmousedown="app.onOrbPressFollowup(event)"
+              onmouseup="app.onOrbReleaseFollowup(event)"
+              onmouseleave="app.onOrbReleaseFollowup(event)">
+              <div class="orb-inner">
+                <div class="orb-glow"></div>
+                <div class="orb-core"></div>
+                <svg class="orb-mic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" y1="19" x2="12" y2="23"/>
+                  <line x1="8" y1="23" x2="16" y2="23"/>
+                </svg>
+              </div>
+            </button>
+            <span class="rf-hint">按住补充</span>
+          </div>
+          <button class="skip-pill rf-skip" onclick="app.skipFollowup()">跳过追问 →</button>
+        </div>
+      </div>
+
+      <!-- 共情 Toast -->
+      <div class="empathy-toast" id="empathy-toast"></div>
+    </section>
+
+    <!-- ==================== 页面：章节转场 ==================== -->
+    <section class="page" id="page-transition">
+      <div class="transition-bg" id="transition-bg"></div>
+      <div class="transition-content">
+        <p class="transition-text" id="transition-text"></p>
+      </div>
+      <button class="transition-skip" onclick="app.skipTransition()">点击跳过</button>
+    </section>
+
+    <!-- ==================== 页面：收尾仪式 ==================== -->
+    <section class="page" id="page-closing">
+      <div class="closing-content">
+        <p class="closing-line">今天聊得很透。</p>
+        <p class="closing-gap"></p>
+        <p class="closing-line">你给的信息足够</p>
+        <p class="closing-line">写一份有深度的报告了。</p>
+        <div class="closing-divider">
+          <span class="closing-star">✦</span>
+        </div>
+        <p class="closing-line closing-muted">报告将在稍后呈现</p>
+        <button class="btn btn-primary btn-large" onclick="router.go('summary')">查看对话纪要</button>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：对话纪要 ==================== -->
+    <section class="page" id="page-summary">
+      <div class="summary-content">
+        <header class="summary-header">
+          <h2 class="summary-title">你的战略对话纪要</h2>
+          <div class="summary-line"></div>
+        </header>
+
+        <div class="summary-editor" id="summary-editor"></div>
+
+        <div class="summary-stats">
+          <span class="stats-count" id="summary-count">0 字</span>
+          <span class="stats-hint">建议 ≥ 200 字</span>
+        </div>
+
+        <div class="summary-actions">
+          <button class="btn btn-outline" onclick="app.editSummary()">编辑</button>
+          <button class="btn btn-primary" onclick="app.submitFromSummary()">提交分析</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：豆包引导 ==================== -->
+    <section class="page" id="page-doubao-guide">
+      <div class="doubao-content">
+        <button class="btn-back" onclick="app.goHome()" aria-label="返回首页">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+
+        <h2 class="doubao-title">语音深度交流</h2>
+
+        <div class="doubao-intro">
+          <p>你会和豆包进行约 30 分钟</p>
+          <p>的自由对话。</p>
+        </div>
+
+        <div class="doubao-sections">
+          <p class="doubao-sections-title">它会问你这些问题：</p>
+          <div class="doubao-section-card">
+            <div class="ds-item">
+              <span class="ds-num">①</span>
+              <span class="ds-text">现在的卡住与处境</span>
+            </div>
+            <div class="ds-item">
+              <span class="ds-num">②</span>
+              <span class="ds-text">方向与障碍</span>
+            </div>
+            <div class="ds-item">
+              <span class="ds-num">③</span>
+              <span class="ds-text">深层自我触碰</span>
+            </div>
+            <div class="ds-item">
+              <span class="ds-num">④</span>
+              <span class="ds-text">希望与行动</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="doubao-instruction">
+          <p>聊完后，复制全部对话</p>
+          <p>回到这里提交。</p>
+        </div>
+
+        <p class="doubao-wechat-hint" id="doubao-wechat-hint" style="display:none;">
+          当前在微信内打开，可能无法直接跳转豆包，点击「前往豆包」后将引导你复制链接。
+        </p>
+
+        <div class="doubao-actions">
+          <button class="btn btn-outline btn-large" onclick="app.showTutorial()">复制对话教程</button>
+          <button class="btn btn-primary btn-large" onclick="app.confirmDoubao()">前往豆包</button>
+        </div>
+
+        <div class="doubao-extras">
+          <button class="text-link" onclick="router.go('guide')">还没准备好？回去深潜 →</button>
+        </div>
+      </div>
+
+      <!-- 二次确认弹层 -->
+      <div class="modal-overlay" id="doubao-confirm-modal">
+        <div class="modal">
+          <p class="modal-text">即将离开 BEARING 打开豆包，你的进度不会丢失。</p>
+          <div class="modal-actions">
+            <button class="btn btn-outline" onclick="app.closeDoubaoConfirm()">取消</button>
+            <button class="btn btn-primary" type="button" onclick="app.confirmGoDoubao()">确认前往</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 教程弹层 -->
+      <div class="modal-overlay" id="tutorial-modal">
+        <div class="modal modal-large">
+          <h3 class="modal-title">如何复制豆包对话</h3>
+          <div class="tutorial-steps">
+            <div class="t-step">
+              <span class="t-num">1</span>
+              <p>在豆包对话页面，点击右上角「···」</p>
+            </div>
+            <div class="t-step">
+              <span class="t-num">2</span>
+              <p>选择「分享」→「复制全部内容」</p>
+            </div>
+            <div class="t-step">
+              <span class="t-num">3</span>
+              <p>回到 BEARING，粘贴到提交页面</p>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="app.closeTutorial()">知道了</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：提交对话 ==================== -->
+    <section class="page" id="page-submit">
+      <div class="submit-content">
+        <button class="btn-back" onclick="app.goHome()" aria-label="返回首页">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+
+        <h2 class="submit-title">提交你的对话</h2>
+
+        <div class="submit-tabs">
+          <button class="tab-btn active" data-tab="paste" onclick="app.switchTab('paste')">粘贴对话</button>
+          <button class="tab-btn" data-tab="manual" onclick="app.switchTab('manual')">手动输入</button>
+        </div>
+
+        <!-- 粘贴模式 -->
+        <div class="tab-panel active" id="tab-paste">
+          <textarea class="submit-textarea" id="paste-input" placeholder="请粘贴您在豆包中的完整对话记录（包含您和助手的所有消息）……"></textarea>
+        </div>
+
+        <!-- 手动输入模式 -->
+        <div class="tab-panel" id="tab-manual">
+          <textarea class="submit-textarea" id="manual-input" placeholder="请在这里写下你的战略对话内容，包含你的现状、方向、障碍、深层思考和希望……"></textarea>
+        </div>
+
+        <div class="submit-note">
+          <span class="submit-count" id="submit-count">0 字</span>
+          <span class="submit-hint">建议 ≥ 200 字</span>
+        </div>
+
+        <button class="btn btn-primary btn-large btn-full" onclick="app.submitDialogue()">提交分析</button>
+
+        <div class="submit-privacy">
+          <label class="checkbox-label">
+            <input type="checkbox" id="privacy-check">
+            <span class="checkmark"></span>
+            <span class="checkbox-text">我已阅读并同意<a href="#privacy" onclick="event.preventDefault();router.go('privacy')">隐私声明</a></span>
+          </label>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：分析中 ==================== -->
+    <section class="page" id="page-analyze">
+      <div class="analyze-content">
+        <h2 class="analyze-title">正在沉淀你的对话</h2>
+
+        <div class="analyze-dots">
+          <div class="a-dot"></div>
+          <div class="a-dot"></div>
+          <div class="a-dot"></div>
+        </div>
+
+        <div class="analyze-steps">
+          <div class="a-step" data-step="1">锚定现状</div>
+          <div class="a-step" data-step="2">识别张力</div>
+          <div class="a-step" data-step="3">编织报告</div>
+        </div>
+
+        <p class="analyze-status" id="analyze-status">AI 咨询师正在阅读你的对话…</p>
+
+        <div class="analyze-error" id="analyze-error" style="display:none;">
+          <p class="analyze-error-msg" id="analyze-error-msg"></p>
+          <div class="analyze-error-actions">
+            <button class="btn btn-primary btn-large" type="button" onclick="app.retryAnalysis()">重新生成</button>
+            <button class="btn btn-outline btn-large" type="button" onclick="app.goDiagnose()">改用手动豆包</button>
+            <button class="btn btn-outline" type="button" onclick="router.go('report-save')">手动粘贴报告</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：保存报告 ==================== -->
+    <section class="page" id="page-report-save">
+      <div class="report-save-content">
+        <h2 class="report-save-title">粘贴你的报告</h2>
+        <p class="report-save-hint">将诊断咨询师生成的报告粘贴到下方</p>
+        <textarea class="submit-textarea" id="report-input" placeholder="请粘贴你的战略诊断报告……" rows="12"></textarea>
+        <div class="submit-note">
+          <span class="submit-count" id="report-count">0 字</span>
+        </div>
+        <button class="btn btn-primary btn-large btn-full" onclick="app.saveReport()">保存报告</button>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：报告阅读器 ==================== -->
+    <section class="page" id="page-report">
+      <div class="report-content">
+        <header class="report-header">
+          <h2 class="report-brand">BEARING · 战略诊断报告</h2>
+          <p class="report-date" id="report-date"></p>
+          <div class="report-line"></div>
+        </header>
+
+        <div class="report-body" id="report-body"></div>
+
+        <div class="report-actions">
+          <button class="btn btn-outline" onclick="app.saveReportLocal()">保存到本地</button>
+          <button class="btn btn-primary" onclick="app.shareReport()">分享</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：历史列表 ==================== -->
+    <section class="page" id="page-history">
+      <div class="history-content">
+        <header class="history-header">
+          <button class="btn-back" onclick="router.go('cover')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <h2 class="history-title">历史记录</h2>
+        </header>
+
+        <div class="history-list" id="history-list"></div>
+
+        <div class="history-empty" id="history-empty">
+          <p>还没有保存的报告</p>
+          <p class="history-empty-hint">完成一次战略深潜后，报告会出现在这里</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 页面：隐私政策 ==================== -->
+    <section class="page" id="page-privacy">
+      <div class="privacy-content">
+        <button class="btn-back" onclick="app.goHome()" aria-label="返回首页">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+        </button>
+
+        <h2 class="privacy-title">隐私与数据</h2>
+
+        <div class="privacy-sections">
+          <div class="privacy-section">
+            <h3>纯本地存储</h3>
+            <p>你的所有对话、报告和历史记录均保存在你的设备本地（localStorage）。BEARING 不拥有服务器，不会收集或上传你的任何数据。</p>
+          </div>
+
+          <div class="privacy-section">
+            <h3>数据安全</h3>
+            <p>你的战略对话从未离开你的设备。清除浏览器缓存或更换设备会导致数据丢失，建议及时导出报告。</p>
+          </div>
+
+          <div class="privacy-section">
+            <h3>免责声明</h3>
+            <p>BEARING 提供的是个人战略探索工具，不构成心理咨询、心理治疗、法律或财务建议。如有严重心理困扰，请寻求专业帮助。</p>
+          </div>
+
+          <div class="privacy-section">
+            <h3>数据清除</h3>
+            <button class="btn btn-outline btn-danger" onclick="app.clearAllData()">一键清除所有本地数据</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /#app -->
+
+  <!-- 豆包跳转失败：复制链接 -->
+  <div class="modal-overlay" id="doubao-fallback-modal">
+    <div class="modal modal-large">
+      <h3 class="modal-title">在浏览器中打开豆包</h3>
+      <p class="modal-text modal-text-left" id="doubao-fallback-msg">无法自动跳转，请复制链接后在浏览器中打开。</p>
+      <div class="doubao-link-box">
+        <p class="doubao-link-label">个人战略咨询师 · 豆包智能体</p>
+        <p class="doubao-link-url" id="doubao-fallback-link">https://doubao.com/bot/XV8wCfJW</p>
+        <input type="text" class="doubao-link-input" id="doubao-fallback-link-input" value="https://doubao.com/bot/XV8wCfJW" readonly aria-hidden="true" tabindex="-1">
+      </div>
+      <p class="doubao-fallback-hint">复制后，打开手机 Safari / Chrome，粘贴到地址栏即可。</p>
+      <div class="modal-actions modal-actions-stack">
+        <button class="btn btn-primary btn-full" type="button" onclick="app.copyDoubaoLink()">复制链接</button>
+        <button class="btn btn-outline btn-full" type="button" onclick="app.closeDoubaoFallback()">知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 全局 Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/config.js"></script>
+  <script src="js/prompts.js"></script>
+  <script src="js/deepseek.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
